@@ -17,11 +17,15 @@ export default function HomePage() {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
     };
-
     getSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      // Only set the session if the user's email is confirmed
+      if (session?.user?.email_confirmed_at) {
+        setSession(session);
+      } else {
+        setSession(null);
+      }
     });
 
     return () => {
@@ -48,22 +52,28 @@ export default function HomePage() {
     setIsLoading(false);
   };
   
+  const handleGuestSignIn = async () => {
+    setIsLoading(true);
+    setMessage('');
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) setMessage(`Error: ${error.message}`);
+    setIsLoading(false);
+  };
+  
   const handleSignOut = async () => {
     setIsLoading(true);
     await supabase.auth.signOut();
     setIsLoading(false);
   };
 
-  // If a user is logged in, show the new dashboard view
   if (session) {
     return (
       <main className="flex min-h-screen flex-col items-center p-8 bg-gray-900 text-white">
         <div className="w-full max-w-4xl">
-          {/* Header */}
           <div className="flex justify-between items-center mb-12">
             <h1 className="text-2xl font-bold text-blue-400">PsychePrep</h1>
             <div className="flex items-center">
-              <span className="text-gray-400 mr-4 text-sm">{session.user.email}</span>
+              <span className="text-gray-400 mr-4 text-sm">{session.user.is_anonymous ? 'Guest User' : session.user.email}</span>
               <button
                 onClick={handleSignOut}
                 className="px-4 py-2 bg-red-600 text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"
@@ -72,37 +82,24 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-
-          {/* Dashboard Content */}
           <div className="text-center">
             <h2 className="text-4xl font-bold mb-4">User Dashboard</h2>
             <p className="text-gray-400 mb-10">Select a module to begin your practice session.</p>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* WAT Card */}
               <div className="p-6 bg-gray-800 border border-gray-700 rounded-lg">
                 <h3 className="text-2xl font-bold mb-3">Word Association Test</h3>
                 <p className="text-gray-400 mb-6">React to 60 words under time pressure.</p>
                 <Link href="/wat" className="w-full">
-                  <button className="w-full px-6 py-3 bg-blue-600 font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-                    Start WAT Practice
-                  </button>
+                  <button className="w-full px-6 py-3 bg-blue-600 font-semibold rounded-lg hover:bg-blue-700 transition-colors">Start WAT Practice</button>
                 </Link>
               </div>
-              
-              {/* SRT Card */}
               <div className="p-6 bg-gray-800 border border-gray-700 rounded-lg">
                 <h3 className="text-2xl font-bold mb-3">Situation Reaction Test</h3>
                 <p className="text-gray-400 mb-6">Respond to 60 real-life situations.</p>
-                <button 
-                  onClick={() => alert('SRT Simulator coming soon!')}
-                  className="w-full px-6 py-3 bg-gray-700 font-semibold rounded-lg cursor-not-allowed"
-                >
-                  Start SRT Practice
-                </button>
+                <Link href="/srt" className="w-full">
+                  <button className="w-full px-6 py-3 bg-blue-600 font-semibold rounded-lg hover:bg-blue-700 transition-colors">Start SRT Practice</button>
+                </Link>
               </div>
-              
-              {/* TAT Card */}
               <div className="p-6 bg-gray-800 border border-gray-700 rounded-lg">
                 <h3 className="text-2xl font-bold mb-3">Thematic Apperception Test</h3>
                 <p className="text-gray-400 mb-6">Write stories for 12 ambiguous pictures.</p>
@@ -120,12 +117,12 @@ export default function HomePage() {
     );
   }
 
-  // If no user is logged in, show the authentication form
   return (
      <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
       <div className="w-full max-w-sm">
         <h1 className="text-3xl font-bold mb-6 text-center">PsychePrep</h1>
         <p className="text-gray-400 mb-6 text-center">Create an account or sign in.</p>
+        
         <form className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email</label>
@@ -144,6 +141,21 @@ export default function HomePage() {
             </button>
           </div>
         </form>
+        
+        <div className="my-6 flex items-center">
+          <div className="flex-grow border-t border-gray-600"></div>
+          <span className="flex-shrink mx-4 text-gray-400">OR</span>
+          <div className="flex-grow border-t border-gray-600"></div>
+        </div>
+
+        <button
+          onClick={handleGuestSignIn}
+          disabled={isLoading}
+          className="w-full px-4 py-2 bg-green-600 font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-500"
+        >
+          {isLoading ? '...' : 'Sign in as Guest'}
+        </button>
+
         {message && <p className="mt-4 text-center text-sm text-gray-300">{message}</p>}
       </div>
     </main>
