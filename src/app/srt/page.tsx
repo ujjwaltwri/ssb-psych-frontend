@@ -7,11 +7,11 @@ import { supabase } from '@/lib/supabaseClient';
 type TestState = 'ready' | 'running' | 'finished';
 
 interface Analysis {
-  overall_summary: string;
-  positive_traits: string[];
-  areas_for_improvement: string[];
-  selection_potential_analysis: string;
-  olq_rating: { [key: string]: number };
+  overall_summary?: string;
+  positive_traits?: string[];
+  areas_for_improvement?: string[];
+  selection_potential_analysis?: string;
+  olq_rating?: { [key: string]: number };
 }
 
 export default function SrtTestPage() {
@@ -108,7 +108,7 @@ export default function SrtTestPage() {
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
         <h1 className="text-4xl font-bold text-center">Situation Reaction Test</h1>
         <p className="text-gray-400 mt-4 text-center max-w-xl">
-          You will be presented with 60 situations. For each one, write your reaction, describing what you would do.
+          You will be presented with a series of situations. For each one, write your reaction, describing what you would do.
         </p>
         <button
           onClick={startTest}
@@ -126,6 +126,7 @@ export default function SrtTestPage() {
         <div className="text-center w-full max-w-3xl">
           <h1 className="text-4xl font-bold">Test Complete!</h1>
           <p className="text-gray-400 mt-2 mb-8">Your responses have been saved.</p>
+          
           {!analysis && !isAnalyzing && (
             <button
               onClick={handleAnalysis}
@@ -134,13 +135,54 @@ export default function SrtTestPage() {
               Analyze My Responses
             </button>
           )}
+
           {isAnalyzing && <p className="text-2xl animate-pulse">AI is analyzing your responses...</p>}
+
           {analysis && (
             <div className="mt-8 p-8 border border-gray-700 rounded-lg bg-gray-800 text-left">
               <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">AI Feedback Report</h2>
-              {/* Analysis content will be rendered here */}
+              <div className="space-y-6">
+                
+                {analysis.overall_summary && <div>
+                  <h3 className="font-bold text-xl mb-2">Overall Summary</h3>
+                  <p className="text-gray-300">{analysis.overall_summary}</p>
+                </div>}
+
+                {analysis.selection_potential_analysis && <div className="p-4 bg-gray-700/50 border border-yellow-500/50 rounded-lg">
+                  <h3 className="font-bold text-xl mb-2 text-yellow-400">Selection Potential Analysis</h3>
+                  <p className="text-gray-300">{analysis.selection_potential_analysis}</p>
+                </div>}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {analysis.positive_traits && <div>
+                      <h3 className="font-bold text-xl mb-2">Positive Traits</h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-1">
+                        {analysis.positive_traits.map((trait, i) => <li key={i}>{trait}</li>)}
+                      </ul>
+                    </div>}
+                    {analysis.areas_for_improvement && <div>
+                      <h3 className="font-bold text-xl mb-2">Areas for Improvement</h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-1">
+                        {analysis.areas_for_improvement.map((area, i) => <li key={i}>{area}</li>)}
+                      </ul>
+                    </div>}
+                </div>
+                
+                {analysis.olq_rating && <div>
+                  <h3 className="font-bold text-xl mb-3">Officer Like Qualities (Rating: 1-5)</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
+                    {Object.entries(analysis.olq_rating).map(([key, value]) => (
+                      <div key={key} className="flex justify-between items-center text-sm">
+                        <span className="text-gray-300 capitalize">{key.replace(/_/g, ' ')}</span>
+                        <span className="font-bold text-blue-400">{value} / 5</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>}
+              </div>
             </div>
           )}
+          
           <button
             onClick={() => router.push('/')}
             className="mt-12 px-8 py-3 bg-gray-600 font-semibold rounded-lg hover:bg-gray-700"

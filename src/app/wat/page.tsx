@@ -7,24 +7,11 @@ import { supabase } from '@/lib/supabaseClient';
 type TestState = 'ready' | 'running' | 'finished';
 
 interface Analysis {
-  overall_summary: string;
-  positive_traits: string[];
-  areas_for_improvement: string[];
-  selection_potential_analysis: string;
-  olq_rating: {
-    effective_intelligence: number;
-    reasoning_ability: number;
-    organizing_ability: number;
-    power_of_expression: number;
-    social_adaptability: number;
-    cooperation: number;
-    sense_of_responsibility: number;
-    initiative: number;
-    self_confidence: number;
-    speed_of_decision: number;
-    determination: number;
-    courage: number;
-  };
+  overall_summary?: string;
+  positive_traits?: string[];
+  areas_for_improvement?: string[];
+  selection_potential_analysis?: string;
+  olq_rating?: { [key: string]: number };
 }
 
 export default function WatTestPage() {
@@ -40,7 +27,6 @@ export default function WatTestPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const responseRef = useRef(currentResponse);
-
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
@@ -173,29 +159,33 @@ export default function WatTestPage() {
             <div className="mt-8 p-8 border border-gray-700 rounded-lg bg-gray-800 text-left">
               <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">AI Feedback Report</h2>
               <div className="space-y-6">
-                <div>
+                
+                {analysis.overall_summary && <div>
                   <h3 className="font-bold text-xl mb-2">Overall Summary</h3>
                   <p className="text-gray-300">{analysis.overall_summary}</p>
-                </div>
-                <div className="p-4 bg-gray-700/50 border border-yellow-500/50 rounded-lg">
+                </div>}
+
+                {analysis.selection_potential_analysis && <div className="p-4 bg-gray-700/50 border border-yellow-500/50 rounded-lg">
                   <h3 className="font-bold text-xl mb-2 text-yellow-400">Selection Potential Analysis</h3>
                   <p className="text-gray-300">{analysis.selection_potential_analysis}</p>
-                </div>
+                </div>}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+                    {analysis.positive_traits && <div>
                       <h3 className="font-bold text-xl mb-2">Positive Traits</h3>
                       <ul className="list-disc list-inside text-gray-300 space-y-1">
                         {analysis.positive_traits.map((trait, i) => <li key={i}>{trait}</li>)}
                       </ul>
-                    </div>
-                    <div>
+                    </div>}
+                    {analysis.areas_for_improvement && <div>
                       <h3 className="font-bold text-xl mb-2">Areas for Improvement</h3>
                       <ul className="list-disc list-inside text-gray-300 space-y-1">
                         {analysis.areas_for_improvement.map((area, i) => <li key={i}>{area}</li>)}
                       </ul>
-                    </div>
+                    </div>}
                 </div>
-                <div>
+                
+                {analysis.olq_rating && <div>
                   <h3 className="font-bold text-xl mb-3">Officer Like Qualities (Rating: 1-5)</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
                     {Object.entries(analysis.olq_rating).map(([key, value]) => (
@@ -205,7 +195,7 @@ export default function WatTestPage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </div>}
               </div>
             </div>
           )}
