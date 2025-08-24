@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
+// Defines the possible states of the test component
 type TestState = 'ready' | 'running' | 'finished';
 
+// Defines the structure for a single analysis item
 interface AnalysisItem {
   issue?: string;
   concern?: string;
@@ -13,6 +15,7 @@ interface AnalysisItem {
   trait?: string; // for positive traits
 }
 
+// Defines the overall structure of the AI analysis report
 interface Analysis {
   overall_summary?: string;
   positive_traits?: (string | AnalysisItem)[];
@@ -22,6 +25,7 @@ interface Analysis {
   olq_rating?: { [key: string]: number };
 }
 
+// Defines the structure for saving test progress to sessionStorage
 interface TestProgress {
   currentSituationIndex: number;
   allResponses: { situation: string, response: string, timeSpent: number }[];
@@ -46,19 +50,19 @@ export default function SrtTestPage() {
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  // Progress calculation
+  // Memoized calculation for the progress bar percentage
   const progress = useMemo(() => {
     if (situations.length === 0) return 0;
     return Math.round((currentSituationIndex / situations.length) * 100);
   }, [currentSituationIndex, situations.length]);
 
-  // Word count calculation
+  // Effect to calculate word count as the user types
   useEffect(() => {
     const words = currentResponse.trim().split(/\s+/).filter(word => word.length > 0);
     setWordCount(words.length);
   }, [currentResponse]);
 
-  // Auto-save progress to sessionStorage
+  // Effect to auto-save progress to sessionStorage during the test
   useEffect(() => {
     if (typeof window !== 'undefined' && testState === 'running') {
       const progressData: TestProgress = {
@@ -70,7 +74,7 @@ export default function SrtTestPage() {
     }
   }, [currentSituationIndex, allResponses, situations, testState]);
 
-  // Load saved progress
+  // Function to load saved progress from sessionStorage
   const loadSavedProgress = useCallback(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('srt-progress');
@@ -90,14 +94,14 @@ export default function SrtTestPage() {
     return false;
   }, []);
 
-  // Clear saved progress
+  // Function to clear saved progress from sessionStorage
   const clearSavedProgress = useCallback(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('srt-progress');
     }
   }, []);
 
-  // Enhanced save function with retry logic
+  // Saves the final session results to the backend with retry logic for network issues
   const saveSessionAndFinish = useCallback(async (finalResponses: { situation: string, response: string, timeSpent: number }[], retryCount = 0) => {
     if (isSaving) return;
     setIsSaving(true);
@@ -131,7 +135,7 @@ export default function SrtTestPage() {
       console.error('Error saving session:', error);
       setError(error instanceof Error ? error.message : 'Failed to save session');
       
-      // Retry logic
+      // Simple retry logic: try up to 2 more times on failure
       if (retryCount < 2) {
         setTimeout(() => {
           saveSessionAndFinish(finalResponses, retryCount + 1);
@@ -142,7 +146,7 @@ export default function SrtTestPage() {
     }
   }, [apiUrl, isSaving, clearSavedProgress]);
 
-  // Handle situation completion
+  // Handles moving to the next situation or finishing the test
   const handleNext = useCallback(() => {
     if (isSaving || !currentResponse.trim()) return;
     
@@ -166,27 +170,27 @@ export default function SrtTestPage() {
     }
   }, [allResponses, situations, currentSituationIndex, currentResponse, saveSessionAndFinish, isSaving, startTime]);
 
-  // Focus management
+  // Effect to auto-focus the textarea when a new situation appears
   useEffect(() => {
     if (testState === 'running' && textAreaRef.current) {
       textAreaRef.current.focus();
     }
   }, [currentSituationIndex, testState]);
 
-  // Set start time when starting new situation
+  // Effect to record the start time for a new situation
   useEffect(() => {
     if (testState === 'running') {
       setStartTime(Date.now());
     }
   }, [currentSituationIndex, testState]);
 
-  // Enhanced start test function
+  // Initializes a new test, checking for saved progress first
   const startTest = async () => {
     setError(null);
     setAnalysis(null);
     setSessionId(null);
     
-    // Check for saved progress
+    // Offer to resume if saved data is found
     const hasSavedProgress = loadSavedProgress();
     if (hasSavedProgress) {
       const confirmResume = window.confirm('Found saved progress. Would you like to resume where you left off?');
@@ -198,7 +202,7 @@ export default function SrtTestPage() {
       }
     }
     
-    // Start fresh test
+    // Reset state for a fresh test
     setAllResponses([]);
     setCurrentSituationIndex(0);
     setCurrentResponse('');
@@ -225,7 +229,7 @@ export default function SrtTestPage() {
     }
   };
 
-  // Enhanced analysis function
+  // Fetches the AI analysis for the completed session, with retry logic
   const handleAnalysis = async (retryCount = 0) => {
     if (!sessionId) return;
     setIsAnalyzing(true);
@@ -255,7 +259,7 @@ export default function SrtTestPage() {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get analysis';
       setError(errorMessage);
       
-      // Retry logic for analysis
+      // Simple retry logic for analysis fetch
       if (retryCount < 1) {
         setTimeout(() => {
           handleAnalysis(retryCount + 1);
@@ -266,12 +270,12 @@ export default function SrtTestPage() {
     }
   };
 
-  // Keyboard shortcuts
+  // Effect to handle global keyboard shortcuts (Submit)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (testState === 'running') {
         if (e.key === 'Enter' && e.ctrlKey && currentResponse.trim()) {
-          e.preventDefault();
+          e.preventDefault(); // Prevents new line in textarea
           handleNext();
         }
       }
@@ -281,12 +285,15 @@ export default function SrtTestPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [testState, currentResponse, handleNext]);
 
-  // Input validation
+  // Memoized input validation check
   const isResponseValid = useMemo(() => {
     return currentResponse.trim().length >= 10 && wordCount >= 3;
   }, [currentResponse, wordCount]);
 
-  // Render functions for different states
+  // RENDER LOGIC
+  // --------------------------------------------------
+
+  // Initial screen before the test starts
   if (testState === 'ready') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -323,6 +330,7 @@ export default function SrtTestPage() {
     );
   }
 
+  // Screen shown after the test is completed
   if (testState === 'finished') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -374,7 +382,7 @@ export default function SrtTestPage() {
                 {analysis.final_verdict && (
                   <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                     <h3 className="font-bold text-xl mb-3 text-red-400">⚖️ Final Verdict</h3>
-                    <p className='text-gray-300 italic text-lg'>{`"${analysis.final_verdict}"`}</p>
+                    <p className="text-gray-300 italic text-lg">{`"${analysis.final_verdict}"`}</p>
                   </div>
                 )}
 
@@ -384,7 +392,7 @@ export default function SrtTestPage() {
                       <h3 className="font-bold text-xl mb-3 text-green-300">✅ Positive Traits</h3>
                       <div className="space-y-2">
                         {analysis.positive_traits.map((trait, i) => {
-                          // Check if trait is an object or string
+                          // The API can return a mix of strings and objects, so we handle both.
                           if (typeof trait === 'object' && trait !== null) {
                             return (
                               <div key={i} className="bg-green-800/20 p-3 rounded-lg">
@@ -402,7 +410,8 @@ export default function SrtTestPage() {
                               </div>
                             );
                           } else {
-                            // Fallback for string format
+                            // Fallback for simple string format, which may contain basic HTML for formatting.
+                            // Using dangerouslySetInnerHTML is okay here if we trust the API source.
                             return (
                               <div key={i} className="flex items-start">
                                 <span className="text-green-400 mr-2">•</span>
@@ -420,7 +429,6 @@ export default function SrtTestPage() {
                       <h3 className="font-bold text-xl mb-3 text-yellow-300">📈 Areas for Improvement</h3>
                       <div className="space-y-4">
                         {analysis.areas_for_improvement.map((area, i) => {
-                          // Check if area is an object or string
                           if (typeof area === 'object' && area !== null) {
                             return (
                               <div key={i} className="bg-yellow-800/20 p-4 rounded-lg border-l-4 border-yellow-400">
@@ -440,7 +448,6 @@ export default function SrtTestPage() {
                               </div>
                             );
                           } else {
-                            // Fallback for string format
                             return (
                               <div key={i} className="flex items-start">
                                 <span className="text-yellow-400 mr-2">•</span>
@@ -503,6 +510,7 @@ export default function SrtTestPage() {
     );
   }
 
+  // Loading screen shown while fetching the initial set of situations
   if (testState === 'running' && situations.length === 0) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -515,11 +523,11 @@ export default function SrtTestPage() {
     );
   }
 
-  // Main test interface
+  // The main test-taking interface
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-900 text-white">
       <div className="w-full max-w-4xl">
-        {/* Header with progress */}
+        {/* Header with progress bar */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-blue-400">Situation Reaction Test</h1>
@@ -528,7 +536,6 @@ export default function SrtTestPage() {
             </span>
           </div>
           
-          {/* Progress bar */}
           <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
             <div 
               className="bg-blue-500 h-3 rounded-full transition-all duration-300"
@@ -540,7 +547,7 @@ export default function SrtTestPage() {
           </div>
         </div>
 
-        {/* Situation display */}
+        {/* Current situation display */}
         <div className="p-6 bg-gray-800 border-2 border-gray-700 rounded-lg mb-6 hover:border-gray-600 transition-colors">
           <div className="flex items-start">
             <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">
@@ -552,7 +559,7 @@ export default function SrtTestPage() {
           </div>
         </div>
 
-        {/* Response area */}
+        {/* User response area */}
         <div className="space-y-4">
           <div className="relative">
             <textarea
@@ -607,14 +614,14 @@ export default function SrtTestPage() {
           </button>
         </div>
 
-        {/* Quick tips */}
+        {/* Quick tips section */}
         <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
           <h4 className="text-sm font-semibold text-gray-300 mb-2">💡 Quick Tips:</h4>
           <ul className="text-xs text-gray-400 space-y-1">
             <li>• Be specific about your actions</li>
             <li>• Consider the consequences of your decisions</li>
             <li>• Show leadership and problem-solving skills</li>
-            <li>• {`Write naturally - this isn't a formal essay`}</li>
+            <li>• Write naturally - this isn&apos;t a formal essay</li>
           </ul>
         </div>
       </div>

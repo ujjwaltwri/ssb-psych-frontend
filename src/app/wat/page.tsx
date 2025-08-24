@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
+// Defines the possible states of the test
 type TestState = 'ready' | 'running' | 'paused' | 'finished';
 
+// Defines the structure for a single analysis item (e.g., a positive trait or area for improvement)
 interface AnalysisItem {
   issue?: string;
   concern?: string;
@@ -13,6 +15,7 @@ interface AnalysisItem {
   trait?: string; // for positive traits
 }
 
+// Defines the overall structure of the AI analysis report
 interface Analysis {
   overall_summary?: string;
   positive_traits?: (string | AnalysisItem)[];
@@ -21,6 +24,7 @@ interface Analysis {
   olq_rating?: { [key: string]: number };
 }
 
+// Defines the structure for saving test progress to sessionStorage
 interface TestProgress {
   currentWordIndex: number;
   allResponses: { word: string, response: string, timeSpent: number }[];
@@ -46,13 +50,13 @@ export default function WatTestPage() {
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  // Progress calculation
+  // Memoized calculation for the progress bar percentage
   const progress = useMemo(() => {
     if (words.length === 0) return 0;
     return Math.round((currentWordIndex / words.length) * 100);
   }, [currentWordIndex, words.length]);
 
-  // Auto-save progress to sessionStorage
+  // Effect to auto-save progress to sessionStorage during the test
   useEffect(() => {
     if (typeof window !== 'undefined' && testState === 'running') {
       const progressData: TestProgress = {
@@ -65,7 +69,7 @@ export default function WatTestPage() {
     }
   }, [currentWordIndex, allResponses, timeLeft, words, testState]);
 
-  // Load saved progress
+  // Function to load saved progress from sessionStorage
   const loadSavedProgress = useCallback(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('wat-progress');
@@ -86,14 +90,14 @@ export default function WatTestPage() {
     return false;
   }, []);
 
-  // Clear saved progress
+  // Function to clear saved progress from sessionStorage
   const clearSavedProgress = useCallback(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('wat-progress');
     }
   }, []);
 
-  // Improved timer management
+  // Centralized function to start the countdown timer
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     
@@ -108,6 +112,7 @@ export default function WatTestPage() {
     }, 1000);
   }, []);
 
+  // Function to pause the timer
   const pauseTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -115,6 +120,7 @@ export default function WatTestPage() {
     }
   }, []);
 
+  // Function to resume the timer from a paused state
   const resumeTimer = useCallback(() => {
     if (testState === 'paused') {
       startTimer();
@@ -122,7 +128,7 @@ export default function WatTestPage() {
     }
   }, [testState, startTimer]);
 
-  // Enhanced save function with retry logic
+  // Saves the final session results to the backend with retry logic for network issues
   const saveSessionAndFinish = useCallback(async (finalResponses: { word: string, response: string, timeSpent: number }[], retryCount = 0) => {
     if (isSaving) return;
     setIsSaving(true);
@@ -156,7 +162,7 @@ export default function WatTestPage() {
       console.error('Error saving session:', error);
       setError(error instanceof Error ? error.message : 'Failed to save session');
       
-      // Retry logic
+      // Simple retry logic: try up to 2 more times on failure
       if (retryCount < 2) {
         setTimeout(() => {
           saveSessionAndFinish(finalResponses, retryCount + 1);
@@ -167,7 +173,7 @@ export default function WatTestPage() {
     }
   }, [apiUrl, isSaving, clearSavedProgress]);
 
-  // Handle word completion
+  // Handles moving to the next word or finishing the test
   const handleWordComplete = useCallback(() => {
     const timeSpent = Math.max(0, 15 - timeLeft);
     const newResponse = {
@@ -189,21 +195,21 @@ export default function WatTestPage() {
     }
   }, [words, currentWordIndex, currentResponse, timeLeft, allResponses, saveSessionAndFinish, startTimer]);
 
-  // Timer effect
+  // Effect to automatically advance when the timer runs out
   useEffect(() => {
     if (testState === 'running' && timeLeft <= 0 && words.length > 0) {
       handleWordComplete();
     }
   }, [timeLeft, testState, words.length, handleWordComplete]);
 
-  // Focus management
+  // Effect to auto-focus the input field when a new word appears
   useEffect(() => {
     if (testState === 'running' && inputRef.current) {
       inputRef.current.focus();
     }
   }, [currentWordIndex, testState]);
 
-  // Cleanup timer on unmount
+  // Cleanup effect to clear the timer if the component unmounts
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -212,7 +218,7 @@ export default function WatTestPage() {
     };
   }, []);
 
-  // Enhanced analysis function
+  // Fetches the AI analysis for the completed session, with retry logic
   const handleAnalysis = async (retryCount = 0) => {
     if (!sessionId) return;
     setIsAnalyzing(true);
@@ -242,7 +248,7 @@ export default function WatTestPage() {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get analysis';
       setError(errorMessage);
       
-      // Retry logic for analysis
+      // Simple retry logic for analysis fetch
       if (retryCount < 1) {
         setTimeout(() => {
           handleAnalysis(retryCount + 1);
@@ -253,13 +259,12 @@ export default function WatTestPage() {
     }
   };
 
-  // Enhanced start test function
+  // Initializes a new test, checking for saved progress first
   const startTest = async () => {
     setError(null);
     setAnalysis(null);
     setSessionId(null);
     
-    // Check for saved progress
     const hasSavedProgress = loadSavedProgress();
     if (hasSavedProgress) {
       const confirmResume = window.confirm('Found saved progress. Would you like to resume where you left off?');
@@ -272,7 +277,7 @@ export default function WatTestPage() {
       }
     }
     
-    // Start fresh test
+    // Reset state for a fresh test
     setAllResponses([]);
     setCurrentWordIndex(0);
     setCurrentResponse('');
@@ -301,7 +306,7 @@ export default function WatTestPage() {
     }
   };
 
-  // Keyboard shortcuts
+  // Effect to handle global keyboard shortcuts (Pause, Resume, Submit)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (testState === 'running') {
@@ -320,7 +325,10 @@ export default function WatTestPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [testState, currentResponse, handleWordComplete, pauseTimer, resumeTimer]);
 
-  // Render functions for different states
+  // RENDER LOGIC
+  // --------------------------------------------------
+
+  // Initial screen before the test starts
   if (testState === 'ready') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -357,6 +365,7 @@ export default function WatTestPage() {
     );
   }
 
+  // Screen shown when the test is paused
   if (testState === 'paused') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -388,6 +397,7 @@ export default function WatTestPage() {
     );
   }
 
+  // Screen shown after the test is completed
   if (testState === 'finished') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -439,7 +449,7 @@ export default function WatTestPage() {
                 {analysis.final_verdict && (
                   <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                     <h3 className="font-bold text-xl mb-3 text-red-400">⚖️ Final Verdict</h3>
-                    <p className='text-gray-300 italic text-lg'>{`"${analysis.final_verdict}"`}</p>
+                    <p className="text-gray-300 italic text-lg">{`"${analysis.final_verdict}"`}</p>
                   </div>
                 )}
 
@@ -449,7 +459,7 @@ export default function WatTestPage() {
                       <h3 className="font-bold text-xl mb-3 text-green-300">✅ Positive Traits</h3>
                       <div className="space-y-2">
                         {analysis.positive_traits.map((trait, i) => {
-                          // Check if trait is an object or string
+                          // The API can return a mix of strings and objects, so we handle both.
                           if (typeof trait === 'object' && trait !== null) {
                             return (
                               <div key={i} className="bg-green-800/20 p-3 rounded-lg">
@@ -467,7 +477,8 @@ export default function WatTestPage() {
                               </div>
                             );
                           } else {
-                            // Fallback for string format
+                            // Fallback for simple string format, which may contain basic HTML for formatting.
+                            // Using dangerouslySetInnerHTML is okay here if we trust the API source.
                             return (
                               <div key={i} className="flex items-start">
                                 <span className="text-green-400 mr-2">•</span>
@@ -485,7 +496,6 @@ export default function WatTestPage() {
                       <h3 className="font-bold text-xl mb-3 text-yellow-300">📈 Areas for Improvement</h3>
                       <div className="space-y-4">
                         {analysis.areas_for_improvement.map((area, i) => {
-                          // Check if area is an object or string
                           if (typeof area === 'object' && area !== null) {
                             return (
                               <div key={i} className="bg-yellow-800/20 p-4 rounded-lg border-l-4 border-yellow-400">
@@ -505,7 +515,6 @@ export default function WatTestPage() {
                               </div>
                             );
                           } else {
-                            // Fallback for string format
                             return (
                               <div key={i} className="flex items-start">
                                 <span className="text-yellow-400 mr-2">•</span>
@@ -568,6 +577,7 @@ export default function WatTestPage() {
     );
   }
   
+  // Loading screen shown while fetching the initial set of words
   if (words.length === 0 && testState === 'running') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-900 text-white">
@@ -580,11 +590,11 @@ export default function WatTestPage() {
     );
   }
 
-  // Main test interface
+  // The main test-taking interface
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-900 text-white">
       <div className="w-full max-w-3xl">
-        {/* Header with progress */}
+        {/* Header with progress bar and timer */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400 font-medium">
@@ -595,7 +605,6 @@ export default function WatTestPage() {
             </span>
           </div>
           
-          {/* Progress bar */}
           <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
             <div 
               className="bg-blue-500 h-3 rounded-full transition-all duration-300"
@@ -607,14 +616,14 @@ export default function WatTestPage() {
           </div>
         </div>
 
-        {/* Word display */}
+        {/* Current word display */}
         <div className="mb-8 p-8 lg:p-12 bg-gray-800 rounded-lg text-center border-2 border-gray-700 hover:border-gray-600 transition-colors">
           <h2 className="text-4xl lg:text-6xl font-bold text-blue-300 animate-pulse">
             {words[currentWordIndex]}
           </h2>
         </div>
 
-        {/* Input area */}
+        {/* User input area */}
         <div className="space-y-4">
           <input
             ref={inputRef}
@@ -649,7 +658,6 @@ export default function WatTestPage() {
             <span>{currentResponse.length}/200</span>
           </div>
 
-          {/* Next Word Button - Similar to SRT */}
           <button
             onClick={handleWordComplete}
             disabled={!currentResponse.trim() || isSaving}
@@ -676,7 +684,7 @@ export default function WatTestPage() {
         {/* Quick tips */}
         <div className="mt-6 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
           <p className="text-gray-400 text-sm text-center">
-            💡 Write the first thing that comes to mind. Don't overthink it!
+            💡 Write the first thing that comes to mind. Don&apos;t overthink it!
           </p>
         </div>
       </div>
