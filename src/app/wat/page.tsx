@@ -47,7 +47,6 @@ export default function WatTestPage() {
     }
   }, [apiUrl]);
 
-  // Effect 1: Handles the timer countdown.
   useEffect(() => {
     if (testState !== 'running' || timeLeft <= 0) return;
     const timer = setInterval(() => {
@@ -56,7 +55,6 @@ export default function WatTestPage() {
     return () => clearInterval(timer);
   }, [testState, timeLeft]);
 
-  // Effect 2: Handles the logic ONLY when the timer expires.
   useEffect(() => {
     if (testState === 'running' && words.length > 0 && timeLeft <= 0) {
       const newResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
@@ -72,7 +70,6 @@ export default function WatTestPage() {
     }
   }, [timeLeft, testState, words, allResponses, currentResponse, currentWordIndex, saveSessionAndFinish]);
 
-  // Effect 3: Focuses the input field.
   useEffect(() => {
     if (testState === 'running' && inputRef.current) {
       inputRef.current.focus();
