@@ -11,6 +11,7 @@ type TestState = 'ready' | 'running' | 'paused' | 'finished';
 interface AnalysisItem {
   issue?: string;
   concern?: string;
+  explanation?: string;
   evidence?: string;
   trait?: string; // for positive traits
 }
@@ -449,7 +450,7 @@ export default function WatTestPage() {
                 {analysis.final_verdict && (
                   <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                     <h3 className="font-bold text-xl mb-3 text-red-400">⚖️ Final Verdict</h3>
-                    <p className="text-gray-300 italic text-lg">&ldquo;{analysis.final_verdict}&rdquo;</p>
+                    <p className="text-gray-300 italic text-lg">&quot;{analysis.final_verdict}&quot;</p>
                   </div>
                 )}
 
@@ -469,7 +470,7 @@ export default function WatTestPage() {
                                     <span className="text-gray-300 font-medium">{trait.trait || trait.issue}</span>
                                     {trait.evidence && (
                                       <div className="text-sm text-gray-400 mt-1 italic">
-                                        &ldquo;{trait.evidence}&rdquo;
+                                        &quot;{trait.evidence}&quot;
                                       </div>
                                     )}
                                   </div>
@@ -503,13 +504,15 @@ export default function WatTestPage() {
                                   🔍 {area.issue}
                                 </h4>
                                 <div className="space-y-2 text-sm">
-                                  <div>
-                                    <span className="font-medium text-yellow-300">Concern: </span>
-                                    <span className="text-gray-300">{area.concern}</span>
-                                  </div>
+                                  {area.explanation && (
+                                    <div>
+                                      <span className="font-medium text-yellow-300">Explanation: </span>
+                                      <span className="text-gray-300">{area.explanation}</span>
+                                    </div>
+                                  )}
                                   <div>
                                     <span className="font-medium text-yellow-300">Evidence: </span>
-                                    <span className="text-gray-300 italic">&ldquo;{area.evidence}&rdquo;</span>
+                                    <span className="text-gray-300 italic">&quot;{area.evidence}&quot;</span>
                                   </div>
                                 </div>
                               </div>

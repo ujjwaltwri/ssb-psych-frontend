@@ -11,6 +11,7 @@ type TestState = 'ready' | 'running' | 'finished';
 interface AnalysisItem {
   issue?: string;
   concern?: string;
+  explanation?: string;
   evidence?: string;
   trait?: string; // for positive traits
 }
@@ -436,10 +437,12 @@ export default function SrtTestPage() {
                                   🔍 {area.issue}
                                 </h4>
                                 <div className="space-y-2 text-sm">
-                                  <div>
-                                    <span className="font-medium text-yellow-300">Concern: </span>
-                                    <span className="text-gray-300">{area.concern}</span>
-                                  </div>
+                                  {area.explanation && (
+                                    <div>
+                                      <span className="font-medium text-yellow-300">Explanation: </span>
+                                      <span className="text-gray-300">{area.explanation}</span>
+                                    </div>
+                                  )}
                                   <div>
                                     <span className="font-medium text-yellow-300">Evidence: </span>
                                     <span className="text-gray-300 italic">&quot;{area.evidence}&quot;</span>
