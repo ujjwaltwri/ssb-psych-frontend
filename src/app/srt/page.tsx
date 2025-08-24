@@ -157,7 +157,7 @@ export default function SrtTestPage() {
                 
                 {analysis.final_verdict && <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                   <h3 className="font-bold text-xl mb-2 text-red-400">Final Verdict</h3>
-                  <p className='text-gray-300 italic'>"{analysis.final_verdict}"</p>
+                  <p className='text-gray-300 italic'>{`"${analysis.final_verdict}"`}</p>
                 </div>}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
