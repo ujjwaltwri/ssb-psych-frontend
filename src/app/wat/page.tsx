@@ -449,7 +449,7 @@ export default function WatTestPage() {
                 {analysis.final_verdict && (
                   <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                     <h3 className="font-bold text-xl mb-3 text-red-400">⚖️ Final Verdict</h3>
-                    <p className="text-gray-300 italic text-lg">{`"${analysis.final_verdict}"`}</p>
+                    <p className="text-gray-300 italic text-lg">&ldquo;{analysis.final_verdict}&rdquo;</p>
                   </div>
                 )}
 
@@ -469,7 +469,7 @@ export default function WatTestPage() {
                                     <span className="text-gray-300 font-medium">{trait.trait || trait.issue}</span>
                                     {trait.evidence && (
                                       <div className="text-sm text-gray-400 mt-1 italic">
-                                        "{trait.evidence}"
+                                        &ldquo;{trait.evidence}&rdquo;
                                       </div>
                                     )}
                                   </div>
@@ -509,7 +509,7 @@ export default function WatTestPage() {
                                   </div>
                                   <div>
                                     <span className="font-medium text-yellow-300">Evidence: </span>
-                                    <span className="text-gray-300 italic">"{area.evidence}"</span>
+                                    <span className="text-gray-300 italic">&ldquo;{area.evidence}&rdquo;</span>
                                   </div>
                                 </div>
                               </div>
