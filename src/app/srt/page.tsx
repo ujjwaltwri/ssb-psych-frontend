@@ -11,6 +11,7 @@ interface Analysis {
   positive_traits?: string[];
   areas_for_improvement?: string[];
   selection_potential_analysis?: string;
+  final_verdict?: string;
   olq_rating?: { [key: string]: number };
 }
 
@@ -69,6 +70,7 @@ export default function SrtTestPage() {
   };
 
   const saveSessionAndFinish = async (finalResponses: { situation: string, response: string }[]) => {
+    setTestState('finished'); // Finish UI immediately
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("User not authenticated");
@@ -83,8 +85,6 @@ export default function SrtTestPage() {
       setSessionId(result.data.id);
     } catch (error) {
       console.error('Error saving session:', error);
-    } finally {
-      setTestState('finished');
     }
   };
 
@@ -154,23 +154,23 @@ export default function SrtTestPage() {
                   <h3 className="font-bold text-xl mb-2">Overall Summary</h3>
                   <p className="text-gray-300">{analysis.overall_summary}</p>
                 </div>}
-
-                {analysis.selection_potential_analysis && <div className="p-4 bg-gray-700/50 border border-yellow-500/50 rounded-lg">
-                  <h3 className="font-bold text-xl mb-2 text-yellow-400">Selection Potential Analysis</h3>
-                  <p className="text-gray-300">{analysis.selection_potential_analysis}</p>
+                
+                {analysis.final_verdict && <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
+                  <h3 className="font-bold text-xl mb-2 text-red-400">Final Verdict</h3>
+                  <p className="text-gray-300 italic">"{analysis.final_verdict}"</p>
                 </div>}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {analysis.positive_traits && <div>
                       <h3 className="font-bold text-xl mb-2">Positive Traits</h3>
                       <ul className="list-disc list-inside text-gray-300 space-y-1">
-                        {analysis.positive_traits.map((trait, i) => <li key={i}>{trait}</li>)}
+                        {analysis.positive_traits.map((trait, i) => <li key={i} dangerouslySetInnerHTML={{ __html: trait }}></li>)}
                       </ul>
                     </div>}
                     {analysis.areas_for_improvement && <div>
                       <h3 className="font-bold text-xl mb-2">Areas for Improvement</h3>
                       <ul className="list-disc list-inside text-gray-300 space-y-1">
-                        {analysis.areas_for_improvement.map((area, i) => <li key={i}>{area}</li>)}
+                        {analysis.areas_for_improvement.map((area, i) => <li key={i} dangerouslySetInnerHTML={{ __html: area }}></li>)}
                       </ul>
                     </div>}
                 </div>

@@ -28,7 +28,7 @@ export default function WatTestPage() {
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  // Effect 1: Handles the timer countdown
+  // Effect 1: This hook ONLY handles the timer countdown.
   useEffect(() => {
     if (testState !== 'running' || timeLeft <= 0) return;
     const timer = setInterval(() => {
@@ -37,23 +37,23 @@ export default function WatTestPage() {
     return () => clearInterval(timer);
   }, [testState, timeLeft]);
 
-  // Effect 2: Handles the logic when the timer hits 0
+  // Effect 2: This hook ONLY handles the logic for when the timer expires.
   useEffect(() => {
     if (testState === 'running' && words.length > 0 && timeLeft <= 0) {
-      const finalResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
-      setAllResponses(finalResponses);
+      const newResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
+      setAllResponses(newResponses);
       setCurrentResponse('');
 
       if (currentWordIndex === words.length - 1) {
-        saveSessionAndFinish(finalResponses);
+        saveSessionAndFinish(newResponses);
       } else {
         setCurrentWordIndex(prevIndex => prevIndex + 1);
         setTimeLeft(15);
       }
     }
-  }, [timeLeft, words, testState]);
+  }, [timeLeft, testState, words.length, allResponses, currentResponse, currentWordIndex]);
 
-  // Effect 3: Focuses the input field when the word changes
+  // Effect 3: Focuses the input field.
   useEffect(() => {
     if (testState === 'running' && inputRef.current) {
       inputRef.current.focus();
@@ -61,6 +61,7 @@ export default function WatTestPage() {
   }, [currentWordIndex, testState]);
 
   const saveSessionAndFinish = async (finalResponses: { word: string, response: string }[]) => {
+    setTestState('finished'); // Finish UI immediately
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("User not authenticated");
@@ -75,8 +76,6 @@ export default function WatTestPage() {
       setSessionId(result.data.id);
     } catch (error) {
       console.error('Error saving session:', error);
-    } finally {
-      setTestState('finished');
     }
   };
 
