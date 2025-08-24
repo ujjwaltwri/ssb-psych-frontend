@@ -24,11 +24,14 @@ export default function WatTestPage() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Add this to prevent multiple saves
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const saveSessionAndFinish = useCallback(async (finalResponses: { word: string, response: string }[]) => {
+    if (isSaving) return; // Prevent multiple saves
+    setIsSaving(true);
     setTestState('finished');
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -44,8 +47,10 @@ export default function WatTestPage() {
       setSessionId(result.data.id);
     } catch (error) {
       console.error('Error saving session:', error);
+    } finally {
+      setIsSaving(false);
     }
-  }, [apiUrl]);
+  }, [apiUrl, isSaving]);
 
   useEffect(() => {
     if (testState !== 'running' || timeLeft <= 0) return;
@@ -56,7 +61,7 @@ export default function WatTestPage() {
   }, [testState, timeLeft]);
 
   useEffect(() => {
-    if (testState === 'running' && words.length > 0 && timeLeft <= 0) {
+    if (testState === 'running' && words.length > 0 && timeLeft <= 0 && !isSaving) {
       const newResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
       setAllResponses(newResponses);
       setCurrentResponse('');
@@ -68,7 +73,7 @@ export default function WatTestPage() {
         setTimeLeft(15);
       }
     }
-  }, [timeLeft, testState, words, allResponses, currentResponse, currentWordIndex, saveSessionAndFinish]);
+  }, [timeLeft, testState, words.length, currentWordIndex, isSaving]); // Removed allResponses and currentResponse from dependencies
 
   useEffect(() => {
     if (testState === 'running' && inputRef.current) {
@@ -105,6 +110,7 @@ export default function WatTestPage() {
     setCurrentWordIndex(0);
     setCurrentResponse('');
     setTimeLeft(15);
+    setIsSaving(false); // Reset saving state
     setTestState('running');
     try {
         const response = await fetch(`${apiUrl}/api/new-wat-test`);

@@ -24,11 +24,14 @@ export default function SrtTestPage() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Add this to prevent multiple saves
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const saveSessionAndFinish = useCallback(async (finalResponses: { situation: string, response: string }[]) => {
+    if (isSaving) return; // Prevent multiple saves
+    setIsSaving(true);
     setTestState('finished');
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -44,10 +47,14 @@ export default function SrtTestPage() {
       setSessionId(result.data.id);
     } catch (error) {
       console.error('Error saving session:', error);
+    } finally {
+      setIsSaving(false);
     }
-  }, [apiUrl]);
+  }, [apiUrl, isSaving]);
 
   const handleNext = useCallback(() => {
+    if (isSaving) return; // Prevent action while saving
+
     const newResponses = [...allResponses, { situation: situations[currentSituationIndex], response: currentResponse }];
     
     if (currentSituationIndex === situations.length - 1) {
@@ -58,7 +65,7 @@ export default function SrtTestPage() {
       setCurrentResponse('');
       setCurrentSituationIndex(prevIndex => prevIndex + 1);
     }
-  }, [allResponses, situations, currentSituationIndex, currentResponse, saveSessionAndFinish]);
+  }, [allResponses, situations, currentSituationIndex, currentResponse, saveSessionAndFinish, isSaving]);
 
   useEffect(() => {
     if (testState === 'running' && textAreaRef.current) {
@@ -72,6 +79,7 @@ export default function SrtTestPage() {
     setAllResponses([]);
     setCurrentSituationIndex(0);
     setCurrentResponse('');
+    setIsSaving(false); // Reset saving state
     setTestState('running');
     try {
       const response = await fetch(`${apiUrl}/api/new-srt-test`);
@@ -229,9 +237,19 @@ export default function SrtTestPage() {
         />
         <button
           onClick={handleNext}
-          className="mt-6 w-full px-8 py-3 bg-blue-600 font-semibold rounded-lg hover:bg-blue-700 transition-colors text-xl"
+          disabled={isSaving}
+          className={`mt-6 w-full px-8 py-3 font-semibold rounded-lg transition-colors text-xl ${
+            isSaving 
+              ? 'bg-gray-500 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
-          {currentSituationIndex === situations.length - 1 ? 'Finish Test' : 'Next Situation'}
+          {isSaving 
+            ? 'Saving...' 
+            : currentSituationIndex === situations.length - 1 
+              ? 'Finish Test' 
+              : 'Next Situation'
+          }
         </button>
       </div>
     </main>
