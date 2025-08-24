@@ -443,6 +443,12 @@ export default function SrtTestPage() {
                                       <span className="text-gray-300">{area.explanation}</span>
                                     </div>
                                   )}
+                                  {area.concern && (
+                                    <div>
+                                      <span className="font-medium text-yellow-300">Concern: </span>
+                                      <span className="text-gray-300">{area.concern}</span>
+                                    </div>
+                                  )}
                                   <div>
                                     <span className="font-medium text-yellow-300">Evidence: </span>
                                     <span className="text-gray-300 italic">&quot;{area.evidence}&quot;</span>

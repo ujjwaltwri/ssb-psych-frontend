@@ -11,6 +11,7 @@ type TestState = 'ready' | 'running' | 'paused' | 'finished';
 interface AnalysisItem {
   issue?: string;
   concern?: string;
+  explanation?: string;
   evidence?: string;
   trait?: string; // for positive traits
 }
@@ -503,6 +504,12 @@ export default function WatTestPage() {
                                   🔍 {area.issue}
                                 </h4>
                                 <div className="space-y-2 text-sm">
+                                  {area.explanation && (
+                                    <div>
+                                      <span className="font-medium text-yellow-300">Explanation: </span>
+                                      <span className="text-gray-300">{area.explanation}</span>
+                                    </div>
+                                  )}
                                   {area.concern && (
                                     <div>
                                       <span className="font-medium text-yellow-300">Concern: </span>
