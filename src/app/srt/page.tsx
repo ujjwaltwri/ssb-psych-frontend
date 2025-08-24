@@ -6,10 +6,17 @@ import { supabase } from '@/lib/supabaseClient';
 
 type TestState = 'ready' | 'running' | 'finished';
 
+interface AnalysisItem {
+  issue?: string;
+  concern?: string;
+  evidence?: string;
+  trait?: string; // for positive traits
+}
+
 interface Analysis {
   overall_summary?: string;
-  positive_traits?: string[];
-  areas_for_improvement?: string[];
+  positive_traits?: (string | AnalysisItem)[];
+  areas_for_improvement?: (string | AnalysisItem)[];
   selection_potential_analysis?: string;
   final_verdict?: string;
   olq_rating?: { [key: string]: number };
@@ -375,28 +382,74 @@ export default function SrtTestPage() {
                   {analysis.positive_traits && (
                     <div className="p-4 bg-green-900/30 rounded-lg border border-green-500/30">
                       <h3 className="font-bold text-xl mb-3 text-green-300">✅ Positive Traits</h3>
-                      <ul className="space-y-2">
-                        {analysis.positive_traits.map((trait, i) => (
-                          <li key={i} className="flex items-start">
-                            <span className="text-green-400 mr-2">•</span>
-                            <span className="text-gray-300" dangerouslySetInnerHTML={{ __html: trait }}></span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2">
+                        {analysis.positive_traits.map((trait, i) => {
+                          // Check if trait is an object or string
+                          if (typeof trait === 'object' && trait !== null) {
+                            return (
+                              <div key={i} className="bg-green-800/20 p-3 rounded-lg">
+                                <div className="flex items-start">
+                                  <span className="text-green-400 mr-2">✓</span>
+                                  <div>
+                                    <span className="text-gray-300 font-medium">{trait.trait || trait.issue}</span>
+                                    {trait.evidence && (
+                                      <div className="text-sm text-gray-400 mt-1 italic">
+                                        "{trait.evidence}"
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          } else {
+                            // Fallback for string format
+                            return (
+                              <div key={i} className="flex items-start">
+                                <span className="text-green-400 mr-2">•</span>
+                                <span className="text-gray-300" dangerouslySetInnerHTML={{ __html: trait }}></span>
+                              </div>
+                            );
+                          }
+                        })}
+                      </div>
                     </div>
                   )}
                   
                   {analysis.areas_for_improvement && (
                     <div className="p-4 bg-yellow-900/30 rounded-lg border border-yellow-500/30">
                       <h3 className="font-bold text-xl mb-3 text-yellow-300">📈 Areas for Improvement</h3>
-                      <ul className="space-y-2">
-                        {analysis.areas_for_improvement.map((area, i) => (
-                          <li key={i} className="flex items-start">
-                            <span className="text-yellow-400 mr-2">•</span>
-                            <span className="text-gray-300" dangerouslySetInnerHTML={{ __html: area }}></span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-4">
+                        {analysis.areas_for_improvement.map((area, i) => {
+                          // Check if area is an object or string
+                          if (typeof area === 'object' && area !== null) {
+                            return (
+                              <div key={i} className="bg-yellow-800/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                                <h4 className="font-semibold text-yellow-200 mb-2">
+                                  🔍 {area.issue}
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="font-medium text-yellow-300">Concern: </span>
+                                    <span className="text-gray-300">{area.concern}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-yellow-300">Evidence: </span>
+                                    <span className="text-gray-300 italic">"{area.evidence}"</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          } else {
+                            // Fallback for string format
+                            return (
+                              <div key={i} className="flex items-start">
+                                <span className="text-yellow-400 mr-2">•</span>
+                                <span className="text-gray-300" dangerouslySetInnerHTML={{ __html: area }}></span>
+                              </div>
+                            );
+                          }
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
