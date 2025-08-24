@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -28,40 +28,8 @@ export default function WatTestPage() {
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  // Effect 1: This hook ONLY handles the timer countdown.
-  useEffect(() => {
-    if (testState !== 'running' || timeLeft <= 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft(prevTime => prevTime - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [testState, timeLeft]);
-
-  // Effect 2: This hook ONLY handles the logic for when the timer expires.
-  useEffect(() => {
-    if (testState === 'running' && words.length > 0 && timeLeft <= 0) {
-      const newResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
-      setAllResponses(newResponses);
-      setCurrentResponse('');
-
-      if (currentWordIndex === words.length - 1) {
-        saveSessionAndFinish(newResponses);
-      } else {
-        setCurrentWordIndex(prevIndex => prevIndex + 1);
-        setTimeLeft(15);
-      }
-    }
-  }, [timeLeft, testState, words.length, allResponses, currentResponse, currentWordIndex]);
-
-  // Effect 3: Focuses the input field.
-  useEffect(() => {
-    if (testState === 'running' && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [currentWordIndex, testState]);
-
-  const saveSessionAndFinish = async (finalResponses: { word: string, response: string }[]) => {
-    setTestState('finished'); // Finish UI immediately
+  const saveSessionAndFinish = useCallback(async (finalResponses: { word: string, response: string }[]) => {
+    setTestState('finished');
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("User not authenticated");
@@ -77,7 +45,39 @@ export default function WatTestPage() {
     } catch (error) {
       console.error('Error saving session:', error);
     }
-  };
+  }, [apiUrl]);
+
+  // Effect 1: Handles the timer countdown.
+  useEffect(() => {
+    if (testState !== 'running' || timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft(prevTime => prevTime - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [testState, timeLeft]);
+
+  // Effect 2: Handles the logic ONLY when the timer expires.
+  useEffect(() => {
+    if (testState === 'running' && words.length > 0 && timeLeft <= 0) {
+      const newResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
+      setAllResponses(newResponses);
+      setCurrentResponse('');
+
+      if (currentWordIndex === words.length - 1) {
+        saveSessionAndFinish(newResponses);
+      } else {
+        setCurrentWordIndex(prevIndex => prevIndex + 1);
+        setTimeLeft(15);
+      }
+    }
+  }, [timeLeft, testState, words, allResponses, currentResponse, currentWordIndex, saveSessionAndFinish]);
+
+  // Effect 3: Focuses the input field.
+  useEffect(() => {
+    if (testState === 'running' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [currentWordIndex, testState]);
 
   const handleAnalysis = async () => {
     if (!sessionId) return;
@@ -167,7 +167,7 @@ export default function WatTestPage() {
 
                 {analysis.final_verdict && <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                   <h3 className="font-bold text-xl mb-2 text-red-400">Final Verdict</h3>
-                  <p className="text-gray-300 italic">"{analysis.final_verdict}"</p>
+                  <p className='text-gray-300 italic'>"{analysis.final_verdict}"</p>
                 </div>}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

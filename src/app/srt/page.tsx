@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -28,6 +28,38 @@ export default function SrtTestPage() {
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+  const saveSessionAndFinish = useCallback(async (finalResponses: { situation: string, response: string }[]) => {
+    setTestState('finished');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+      const token = session.access_token;
+      const response = await fetch(`${apiUrl}/api/save-srt-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ responses: finalResponses }),
+      });
+      if (!response.ok) throw new Error('Failed to save session');
+      const result = await response.json();
+      setSessionId(result.data.id);
+    } catch (error) {
+      console.error('Error saving session:', error);
+    }
+  }, [apiUrl]);
+
+  const handleNext = useCallback(() => {
+    const newResponses = [...allResponses, { situation: situations[currentSituationIndex], response: currentResponse }];
+    
+    if (currentSituationIndex === situations.length - 1) {
+      setAllResponses(newResponses);
+      saveSessionAndFinish(newResponses);
+    } else {
+      setAllResponses(newResponses);
+      setCurrentResponse('');
+      setCurrentSituationIndex(prevIndex => prevIndex + 1);
+    }
+  }, [allResponses, situations, currentSituationIndex, currentResponse, saveSessionAndFinish]);
+
   useEffect(() => {
     if (testState === 'running' && textAreaRef.current) {
       textAreaRef.current.focus();
@@ -53,38 +85,6 @@ export default function SrtTestPage() {
       console.error("Failed to fetch situations:", error);
       alert("Could not start the test. Please ensure the backend server is running correctly.");
       setTestState('ready');
-    }
-  };
-  
-  const handleNext = () => {
-    const newResponses = [...allResponses, { situation: situations[currentSituationIndex], response: currentResponse }];
-    
-    if (currentSituationIndex === situations.length - 1) {
-      setAllResponses(newResponses);
-      saveSessionAndFinish(newResponses);
-    } else {
-      setAllResponses(newResponses);
-      setCurrentResponse('');
-      setCurrentSituationIndex(prevIndex => prevIndex + 1);
-    }
-  };
-
-  const saveSessionAndFinish = async (finalResponses: { situation: string, response: string }[]) => {
-    setTestState('finished'); // Finish UI immediately
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("User not authenticated");
-      const token = session.access_token;
-      const response = await fetch(`${apiUrl}/api/save-srt-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ responses: finalResponses }),
-      });
-      if (!response.ok) throw new Error('Failed to save session');
-      const result = await response.json();
-      setSessionId(result.data.id);
-    } catch (error) {
-      console.error('Error saving session:', error);
     }
   };
 
@@ -157,7 +157,7 @@ export default function SrtTestPage() {
                 
                 {analysis.final_verdict && <div className="p-4 bg-gray-900 border border-red-500/50 rounded-lg">
                   <h3 className="font-bold text-xl mb-2 text-red-400">Final Verdict</h3>
-                  <p className="text-gray-300 italic">"{analysis.final_verdict}"</p>
+                  <p className='text-gray-300 italic'>"{analysis.final_verdict}"</p>
                 </div>}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
