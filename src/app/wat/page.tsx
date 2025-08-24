@@ -33,7 +33,6 @@ export default function WatTestPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<number>(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -90,7 +89,6 @@ export default function WatTestPage() {
   // Improved timer management
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    setStartTime(Date.now());
     
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
@@ -625,7 +623,7 @@ export default function WatTestPage() {
         {/* Quick tips */}
         <div className="mt-6 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
           <p className="text-gray-400 text-sm text-center">
-            💡 Write the first thing that comes to mind. Don't overthink it!
+            💡 Write the first thing that comes to mind. {`Don't`} overthink it!
           </p>
         </div>
       </div>
