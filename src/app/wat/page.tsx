@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 
 type TestState = 'ready' | 'running' | 'finished';
 
@@ -27,6 +28,38 @@ export default function WatTestPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Effect 1: Handles the timer countdown
+  useEffect(() => {
+    if (testState !== 'running' || timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft(prevTime => prevTime - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [testState, timeLeft]);
+
+  // Effect 2: Handles the logic when the timer hits 0
+  useEffect(() => {
+    if (testState === 'running' && timeLeft <= 0) {
+      const finalResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
+      setAllResponses(finalResponses);
+      setCurrentResponse('');
+
+      if (currentWordIndex === words.length - 1) {
+        saveSessionAndFinish(finalResponses);
+      } else {
+        setCurrentWordIndex(prevIndex => prevIndex + 1);
+        setTimeLeft(15);
+      }
+    }
+  }, [timeLeft]);
+
+  // Effect 3: Focuses the input field when the word changes
+  useEffect(() => {
+    if (testState === 'running' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [currentWordIndex, testState]);
 
   const saveSessionAndFinish = async (finalResponses: { word: string, response: string }[]) => {
     try {
@@ -69,31 +102,6 @@ export default function WatTestPage() {
       setIsAnalyzing(false);
     }
   };
-
-  useEffect(() => {
-    if (testState !== 'running' || words.length === 0) return;
-    if (timeLeft <= 0) {
-      // Construct the complete list of responses with the latest answer
-      const finalResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
-      setAllResponses(finalResponses);
-      setCurrentResponse('');
-
-      if (currentWordIndex === words.length - 1) {
-        // Now save the complete, final list
-        saveSessionAndFinish(finalResponses);
-      } else {
-        setCurrentWordIndex(prevIndex => prevIndex + 1);
-        setTimeLeft(15);
-      }
-      return;
-    }
-    const timer = setInterval(() => { setTimeLeft(prevTime => prevTime - 1); }, 1000);
-    return () => clearInterval(timer);
-  }, [testState, timeLeft, currentWordIndex, words, allResponses]);
-
-  useEffect(() => {
-    if (testState === 'running' && inputRef.current) { inputRef.current.focus(); }
-  }, [currentWordIndex, testState]);
 
   const startTest = async () => {
     setAnalysis(null);

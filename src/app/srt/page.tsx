@@ -57,11 +57,13 @@ export default function SrtTestPage() {
   
   const handleNext = () => {
     const newResponses = [...allResponses, { situation: situations[currentSituationIndex], response: currentResponse }];
-    setAllResponses(newResponses);
-    setCurrentResponse('');
+    
     if (currentSituationIndex === situations.length - 1) {
+      setAllResponses(newResponses);
       saveSessionAndFinish(newResponses);
     } else {
+      setAllResponses(newResponses);
+      setCurrentResponse('');
       setCurrentSituationIndex(prevIndex => prevIndex + 1);
     }
   };
