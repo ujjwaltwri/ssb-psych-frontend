@@ -34,6 +34,11 @@ export default function SrtTestPage() {
   }, [currentSituationIndex, testState]);
 
   const startTest = async () => {
+    setAnalysis(null);
+    setSessionId(null);
+    setAllResponses([]);
+    setCurrentSituationIndex(0);
+    setCurrentResponse('');
     setTestState('running');
     try {
       const response = await fetch(`${apiUrl}/api/new-srt-test`);

@@ -26,12 +26,7 @@ export default function WatTestPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const responseRef = useRef(currentResponse);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  useEffect(() => {
-    responseRef.current = currentResponse;
-  }, [currentResponse]);
 
   const saveSessionAndFinish = async (finalResponses: { word: string, response: string }[]) => {
     try {
@@ -78,14 +73,13 @@ export default function WatTestPage() {
   useEffect(() => {
     if (testState !== 'running' || words.length === 0) return;
     if (timeLeft <= 0) {
-      const finalResponseForWord = responseRef.current;
-      let finalResponses: { word: string, response: string }[] = [];
-      setAllResponses(prevResponses => {
-          finalResponses = [...prevResponses, { word: words[currentWordIndex], response: finalResponseForWord }];
-          return finalResponses;
-      });
+      // Construct the complete list of responses with the latest answer
+      const finalResponses = [...allResponses, { word: words[currentWordIndex], response: currentResponse }];
+      setAllResponses(finalResponses);
       setCurrentResponse('');
+
       if (currentWordIndex === words.length - 1) {
+        // Now save the complete, final list
         saveSessionAndFinish(finalResponses);
       } else {
         setCurrentWordIndex(prevIndex => prevIndex + 1);
@@ -95,7 +89,7 @@ export default function WatTestPage() {
     }
     const timer = setInterval(() => { setTimeLeft(prevTime => prevTime - 1); }, 1000);
     return () => clearInterval(timer);
-  }, [testState, timeLeft, currentWordIndex, words]);
+  }, [testState, timeLeft, currentWordIndex, words, allResponses]);
 
   useEffect(() => {
     if (testState === 'running' && inputRef.current) { inputRef.current.focus(); }
