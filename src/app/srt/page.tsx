@@ -561,7 +561,7 @@ export default function SrtTestPage() {
             <li>• Be specific about your actions</li>
             <li>• Consider the consequences of your decisions</li>
             <li>• Show leadership and problem-solving skills</li>
-            <li>• Write naturally - this isn't a formal essay</li>
+            <li>• {`Write naturally - this isn't a formal essay`}</li>
           </ul>
         </div>
       </div>
