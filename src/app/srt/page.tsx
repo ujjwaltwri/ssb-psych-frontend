@@ -381,7 +381,7 @@ export default function SrtTestPage() {
                   <p>• Write what you would do in each scenario (minimum 3 words)</p>
                   <p>• Be specific about your actions and show leadership qualities</p>
                   <p>• Consider consequences and demonstrate problem-solving skills</p>
-                  <p>• Write naturally - this isn't a formal essay</p>
+                  <p>• Write naturally - this isn&apos;t a formal essay</p>
                 </div>
               </div>
               
@@ -539,7 +539,7 @@ export default function SrtTestPage() {
                       </svg>
                       Final Verdict
                     </h3>
-                    <p className="text-purple-100 italic text-xl font-medium">"{analysis.final_verdict}"</p>
+                    <p className="text-purple-100 italic text-xl font-medium">&ldquo;{analysis.final_verdict}&rdquo;</p>
                   </div>
                 )}
 
@@ -570,7 +570,7 @@ export default function SrtTestPage() {
                                     <span className="text-green-100 font-medium text-lg">{trait.trait || trait.issue}</span>
                                     {trait.evidence && (
                                       <div className="text-sm text-green-200/80 mt-2 italic">
-                                        "{trait.evidence}"
+                                        &ldquo;{trait.evidence}&rdquo;
                                       </div>
                                     )}
                                   </div>
@@ -629,7 +629,7 @@ export default function SrtTestPage() {
                                   {area.evidence && (
                                     <div>
                                       <span className="font-medium text-yellow-300">Evidence: </span>
-                                      <span className="text-yellow-100 italic">"{area.evidence}"</span>
+                                      <span className="text-yellow-100 italic">&ldquo;{area.evidence}&rdquo;</span>
                                     </div>
                                   )}
                                 </div>
