@@ -147,36 +147,6 @@ export default function RootLayout({
             </div>
           </div>
         </div>
-
-        <style jsx global>{`
-          @keyframes float {
-            0%, 100% { 
-              transform: translateY(0px) rotate(0deg); 
-            }
-            33% { 
-              transform: translateY(-20px) rotate(1deg); 
-            }
-            66% { 
-              transform: translateY(-10px) rotate(-1deg); 
-            }
-          }
-          
-          /* Smooth focus transitions */
-          *:focus {
-            transition: all 0.2s ease;
-          }
-          
-          /* Enhanced selection styling */
-          ::selection {
-            background: rgba(139, 92, 246, 0.2);
-            color: var(--foreground);
-          }
-          
-          ::-moz-selection {
-            background: rgba(139, 92, 246, 0.2);
-            color: var(--foreground);
-          }
-        `}</style>
       </body>
     </html>
   );
