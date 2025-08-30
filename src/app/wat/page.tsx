@@ -416,7 +416,7 @@ export default function WatTestPage() {
                   <p>• For each word, write the first sentence that comes to mind</p>
                   <p>• You have exactly 15 seconds per word</p>
                   <p>• Press Ctrl+Enter to submit early, Esc to pause</p>
-                  <p>• Don't overthink - your first instinct is what matters</p>
+                  <p>• Don&apos;t overthink - your first instinct is what matters</p>
                 </div>
               </div>
               
@@ -637,7 +637,7 @@ export default function WatTestPage() {
                       </svg>
                       Final Verdict
                     </h3>
-                    <p className="text-cyan-100 italic text-xl font-medium">"{analysis.final_verdict}"</p>
+                    <p className="text-cyan-100 italic text-xl font-medium">&ldquo;{analysis.final_verdict}&rdquo;</p>
                   </div>
                 )}
 
@@ -668,7 +668,7 @@ export default function WatTestPage() {
                                     <span className="text-green-100 font-medium text-lg">{trait.trait || trait.issue}</span>
                                     {trait.evidence && (
                                       <div className="text-sm text-green-200/80 mt-2 italic">
-                                        "{trait.evidence}"
+                                        &ldquo;{trait.evidence}&rdquo;
                                       </div>
                                     )}
                                   </div>
@@ -727,7 +727,7 @@ export default function WatTestPage() {
                                   {area.evidence && (
                                     <div>
                                       <span className="font-medium text-yellow-300">Evidence: </span>
-                                      <span className="text-yellow-100 italic">"{area.evidence}"</span>
+                                      <span className="text-yellow-100 italic">&ldquo;{area.evidence}&rdquo;</span>
                                     </div>
                                   )}
                                 </div>
@@ -1032,7 +1032,7 @@ export default function WatTestPage() {
               </div>
               <div className="flex items-center">
                 <span className="w-2 h-2 bg-cyan-400 rounded-full mr-3"></span>
-                Don't overthink your response
+                Don&apos;t overthink your response
               </div>
               <div className="flex items-center">
                 <span className="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
